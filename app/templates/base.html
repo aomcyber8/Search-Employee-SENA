@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }} · {{ request.app.title }}</title>
+  <link href="{{ url_for('static', path='/bootstrap.min.css') }}" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}">
+  <script src="{{ url_for('static', path='/htmx.min.js') }}" defer></script>
+</head>
+<body>
+  {% if user %}
+  <nav class="navbar navbar-expand-lg navbar-dark app-nav">
+    <div class="container-fluid px-lg-4">
+      <a class="navbar-brand fw-semibold" href="/search">สมุดโทรศัพท์พนักงาน</a>
+      <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+        <a class="nav-link text-white" href="/search">ค้นหา</a>
+        {% if user.role == 'admin' %}
+        <a class="nav-link text-white" href="/admin/imports">นำเข้าข้อมูล</a>
+        <a class="nav-link text-white" href="/admin/users">ผู้ใช้งาน</a>
+        {% endif %}
+        <span class="nav-user">{{ user.username }}</span>
+        <form action="/logout" method="post"><input type="hidden" name="csrf" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-light">ออกจากระบบ</button></form>
+      </div>
+    </div>
+  </nav>
+  {% endif %}
+  <main class="container-fluid px-3 px-lg-4 py-4 app-shell">
+    {% if flash %}
+    <div class="alert alert-{{ flash.category }} alert-dismissible fade show" role="alert">
+      {{ flash.message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  <script src="{{ url_for('static', path='/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

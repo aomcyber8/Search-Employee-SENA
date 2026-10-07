@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="login-wrap">
+  <section class="login-card">
+    <div class="brand-mark">S</div>
+    <h1 class="h3 mb-2">เข้าสู่ระบบ</h1>
+    <p class="text-secondary mb-4">ระบบค้นหาข้อมูลติดต่อพนักงาน</p>
+    <form method="post" action="/login" class="vstack gap-3">
+      <input type="hidden" name="csrf" value="{{ csrf_token }}">
+      <div><label class="form-label" for="username">ชื่อผู้ใช้</label><input class="form-control form-control-lg" id="username" name="username" autocomplete="username" required autofocus></div>
+      <div><label class="form-label" for="password">รหัสผ่าน</label><input class="form-control form-control-lg" id="password" name="password" type="password" autocomplete="current-password" required></div>
+      <button class="btn btn-primary btn-lg">เข้าสู่ระบบ</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><div><p class="eyebrow">ADMIN</p><h1>นำเข้าข้อมูล Excel</h1><p>เลือกได้หลายไฟล์ ระบบจะอ่านทุกชีตและให้ตรวจสอบก่อนเผยแพร่</p></div></div>
+<section class="upload-card mb-4">
+  <form action="/admin/imports" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf" value="{{ csrf_token }}">
+    <label class="upload-zone" for="files"><strong>เลือกไฟล์ Excel</strong><span>รองรับ .xlsx หลายไฟล์ ขนาดไม่เกิน 25 MB ต่อไฟล์</span><input id="files" name="files" type="file" accept=".xlsx" multiple required></label>
+    <button class="btn btn-primary mt-3">อัปโหลดและวิเคราะห์</button>
+  </form>
+</section>
+<section class="result-card"><div class="result-head"><h2 class="h5 mb-0">ประวัติการนำเข้า</h2></div>
+  <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>ชุด</th><th>วันที่</th><th>สถานะ</th><th></th></tr></thead><tbody>
+  {% for batch in batches %}<tr><td>#{{ batch.id }}</td><td>{{ batch.created_at.strftime('%d/%m/%Y %H:%M') }}</td><td><span class="status status-{{ batch.status }}">{{ batch.status }}</span></td><td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/admin/imports/{{ batch.id }}/preview">ดูรายละเอียด</a>{% if batch.status == 'published' %}<form class="d-inline" method="post" action="/admin/imports/{{ batch.id }}/rollback"><input type="hidden" name="csrf" value="{{ csrf_token }}"><button class="btn btn-sm btn-outline-danger" onclick="return confirm('ยืนยันการย้อนกลับ?')">ย้อนกลับ</button></form>{% endif %}</td></tr>{% else %}<tr><td colspan="4" class="text-center text-secondary py-5">ยังไม่มีประวัติการนำเข้า</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}
