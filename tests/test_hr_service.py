@@ -58,6 +58,8 @@ def add_active_person(db, user, name, row_number):
 def test_name_normalization_removes_title_nickname_spacing_and_punctuation():
     assert normalize_person_name("นาย สมชาย ทดสอบ (ชาย)") == normalize_person_name("สมชาย-ทดสอบ")
     assert normalize_person_name("Ms. Jane DOE") == normalize_person_name("jane doe")
+    assert normalize_person_name("น.ส.หญิง วราภรณ์ กระวินทร์ (รักษ์)") == normalize_person_name("คุณวราภรณ์ กระวินทร์")
+    assert normalize_person_name("จ.ส.ต.หญิง วราภรณ์ กระวินทร์ (รักษ์)") == normalize_person_name("วราภรณ์ กระวินทร์")
 
 
 def test_parser_reads_all_fields_and_allows_empty_contacts():

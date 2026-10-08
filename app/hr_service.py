@@ -20,7 +20,7 @@ UNCHECKED = "ยังไม่ตรวจสอบ"
 VALID_EMPLOYMENT_STATUSES = {WORKING, RESIGNED, UNCHECKED}
 
 HONORIFIC_RE = re.compile(
-    r"^(?:(?:ว่าที่\s*)?(?:ร\.?ต\.?|ด\.?ช\.?|ด\.?ญ\.?|น\.?ส\.?)|ดร\.?|คุณ|นาย|นางสาว|นาง|mr\.?|mrs\.?|ms\.?)\s*",
+    r"^(?:(?:ว่าที่\s*)?(?:จ\.?\s*ส\.?\s*(?:ต|อ|ท)\.?|ส\.?\s*(?:ต|อ|ท)\.?|ร\.?\s*ต\.?|ด\.?\s*ช\.?|ด\.?\s*ญ\.?|น\.?\s*ส\.?|พญ\.?)|ดร\.?|คุณ|นาย|นางสาว|นาง|หญิง|ชาย|mr\.?|mrs\.?|ms\.?)\s*",
     re.IGNORECASE,
 )
 TRAILING_NICKNAME_RE = re.compile(r"\s*[\(（][^\)）]*[\)）]\s*$")
@@ -180,11 +180,14 @@ def recompute_employment_statuses(db: Session, run: HRUpdateRun | None = None) -
     run = run or current_hr_run(db)
     if not run:
         return 0, 0
-    hr_names = set(
-        db.scalars(
-            select(HRUpdateRecord.normalized_name).where(HRUpdateRecord.run_id == run.id)
+    # Re-normalize the source name at comparison time as well. This repairs older
+    # snapshots created before a newly supported honorific was added.
+    hr_names = {
+        normalize_person_name(name)
+        for name in db.scalars(
+            select(HRUpdateRecord.full_name).where(HRUpdateRecord.run_id == run.id)
         ).all()
-    )
+    }
     people = db.scalars(
         select(Person)
         .where(
