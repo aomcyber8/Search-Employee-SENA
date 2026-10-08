@@ -4,7 +4,7 @@
 <section class="profile-head mt-3 mb-4">
   <div class="avatar">{{ person.full_name[-1] }}</div>
   <div><h1>{{ person.full_name }}</h1>{% if person.nickname %}<p>ชื่อเล่น {{ person.nickname }}</p>{% endif %}</div>
-  {% if person.needs_review %}<span class="badge text-bg-warning">รอตรวจสอบข้อมูล</span>{% endif %}
+  <div class="ms-auto text-end"><span class="employment-status employment-{{ 'working' if person.employment_status == 'ทำงาน' else ('resigned' if person.employment_status == 'ลาออก' else 'unchecked') }}">{{ person.employment_status or 'ยังไม่ตรวจสอบ' }}</span>{% if person.employment_status_updated_at %}<div class="small text-secondary mt-1">ตรวจสอบ {{ person.employment_status_updated_at.strftime('%d/%m/%Y %H:%M') }}</div>{% endif %}{% if person.needs_review %}<div><span class="badge text-bg-warning mt-1">รอตรวจสอบข้อมูล</span></div>{% endif %}</div>
 </section>
 <div class="row g-4">
   {% for a in assignments %}

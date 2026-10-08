@@ -22,6 +22,46 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class HRUpdateRun(Base):
+    __tablename__ = "hr_update_runs"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    status: Mapped[str] = mapped_column(String(30), default="running", index=True)
+    source_url: Mapped[str] = mapped_column(String(700))
+    reported_count: Mapped[int | None] = mapped_column(Integer)
+    parsed_count: Mapped[int | None] = mapped_column(Integer)
+    working_count: Mapped[int | None] = mapped_column(Integer)
+    resigned_count: Mapped[int | None] = mapped_column(Integer)
+    duplicate_name_count: Mapped[int | None] = mapped_column(Integer)
+    error_message: Mapped[str | None] = mapped_column(Text)
+    is_current: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    created_by: Mapped[User] = relationship()
+    records: Mapped[list[HRUpdateRecord]] = relationship(
+        back_populates="run", cascade="all, delete-orphan"
+    )
+
+
+class HRUpdateRecord(Base):
+    __tablename__ = "hr_update_records"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[int] = mapped_column(
+        ForeignKey("hr_update_runs.id", ondelete="CASCADE"), index=True
+    )
+    source_order: Mapped[int] = mapped_column(Integer)
+    employee_code: Mapped[str | None] = mapped_column(String(80), index=True)
+    full_name: Mapped[str] = mapped_column(String(255), index=True)
+    normalized_name: Mapped[str] = mapped_column(String(255), index=True)
+    department: Mapped[str | None] = mapped_column(String(500), index=True)
+    position: Mapped[str | None] = mapped_column(String(255))
+    email: Mapped[str | None] = mapped_column(String(255), index=True)
+    mobile: Mapped[str | None] = mapped_column(String(255))
+    office_phone: Mapped[str | None] = mapped_column(String(255))
+    run: Mapped[HRUpdateRun] = relationship(back_populates="records")
+    __table_args__ = (UniqueConstraint("run_id", "source_order", name="uq_hr_run_source_order"),)
+
+
 class Building(Base):
     __tablename__ = "buildings"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -49,6 +89,11 @@ class Person(Base):
     nickname: Mapped[str | None] = mapped_column(String(120), index=True)
     email_normalized: Mapped[str | None] = mapped_column(String(255), index=True)
     needs_review: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    employment_status: Mapped[str | None] = mapped_column(String(30), index=True)
+    employment_status_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    hr_update_run_id: Mapped[int | None] = mapped_column(
+        ForeignKey("hr_update_runs.id"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     assignments: Mapped[list[Assignment]] = relationship(back_populates="person")
     contacts: Mapped[list[Contact]] = relationship(back_populates="person")

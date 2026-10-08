@@ -223,6 +223,10 @@ def publish_batch(db: Session, batch: ImportBatch, user_id: int) -> None:
     batch.status = "published"
     batch.published_by_id = user_id
     batch.published_at = utcnow()
+    # Re-evaluate the active directory whenever a new Excel snapshot is published.
+    from .hr_service import recompute_employment_statuses
+
+    recompute_employment_statuses(db)
 
 
 def rollback_batch(db: Session, batch: ImportBatch, user_id: int) -> None:
@@ -256,3 +260,6 @@ def rollback_batch(db: Session, batch: ImportBatch, user_id: int) -> None:
     batch.status = "rolled_back"
     batch.rolled_back_by_id = user_id
     batch.rolled_back_at = utcnow()
+    from .hr_service import recompute_employment_statuses
+
+    recompute_employment_statuses(db)

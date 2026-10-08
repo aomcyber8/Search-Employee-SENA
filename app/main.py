@@ -16,11 +16,22 @@ from starlette.middleware.sessions import SessionMiddleware
 from .auth import get_current_user, hash_password, require_admin, verify_password
 from .config import BASE_DIR, settings
 from .db import SessionLocal, get_db
+from .hr_service import (
+    HRUpdateError,
+    RESIGNED,
+    UNCHECKED,
+    VALID_EMPLOYMENT_STATUSES,
+    WORKING,
+    current_hr_run,
+    refresh_hr_data,
+)
 from .import_service import publish_batch, rollback_batch, stage_file
 from .models import (
     Assignment,
     Building,
     Contact,
+    HRUpdateRecord,
+    HRUpdateRun,
     ImportBatch,
     ImportFile,
     ImportIssue,
@@ -146,6 +157,7 @@ def search(
     unit_id: str = "",
     unit: str = "",
     floor: str = "",
+    status: str = "",
     page: int = 1,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -155,6 +167,7 @@ def search(
     selected_building_id = optional_integer(building_id)
     selected_unit_id = optional_integer(unit_id)
     unit_text = " ".join(unit.split())
+    selected_status = status if status in VALID_EMPLOYMENT_STATUSES else ""
     active_assignment = select(Assignment.id).where(
         Assignment.person_id == Person.id,
         Assignment.is_active.is_(True),
@@ -241,6 +254,10 @@ def search(
                 )
             )
         )
+    if selected_status == UNCHECKED:
+        query = query.where(Person.employment_status.is_(None))
+    elif selected_status:
+        query = query.where(Person.employment_status == selected_status)
 
     total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
     people = db.scalars(
@@ -270,11 +287,75 @@ def search(
             unit_id=selected_unit_id,
             unit=unit_text,
             floor=floor,
+            status=selected_status,
+            employment_statuses=(WORKING, RESIGNED, UNCHECKED),
             page=page,
             pages=max(1, math.ceil(total / page_size)),
             total=total,
         ),
     )
+
+
+@app.get("/admin/hr-updates", response_class=HTMLResponse)
+def hr_updates_page(
+    request: Request,
+    page: int = 1,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_admin),
+):
+    page = max(page, 1)
+    page_size = 50
+    active_run = current_hr_run(db)
+    total_records = active_run.parsed_count if active_run and active_run.parsed_count else 0
+    records = []
+    if active_run:
+        records = db.scalars(
+            select(HRUpdateRecord)
+            .where(HRUpdateRecord.run_id == active_run.id)
+            .order_by(HRUpdateRecord.source_order)
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        ).all()
+    runs = db.scalars(
+        select(HRUpdateRun)
+        .options(joinedload(HRUpdateRun.created_by))
+        .order_by(HRUpdateRun.id.desc())
+        .limit(50)
+    ).all()
+    return templates.TemplateResponse(
+        request=request,
+        name="hr_updates.html",
+        context=template_context(
+            request,
+            title="Update Data from HR",
+            user=user,
+            current_run=active_run,
+            records=records,
+            runs=runs,
+            page=page,
+            pages=max(1, math.ceil(total_records / page_size)),
+            total_records=total_records,
+        ),
+    )
+
+
+@app.post("/admin/hr-updates/refresh")
+def refresh_hr_update(
+    request: Request,
+    csrf: str = Form(""),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_admin),
+):
+    validate_csrf(request, csrf)
+    try:
+        run = refresh_hr_data(db, user.id)
+        flash(
+            request,
+            f"อัปเดต HR สำเร็จ {run.parsed_count or 0:,} รายการ: ทำงาน {run.working_count or 0:,} ราย ลาออก {run.resigned_count or 0:,} ราย",
+        )
+    except HRUpdateError as exc:
+        flash(request, str(exc), "danger")
+    return RedirectResponse("/admin/hr-updates", status_code=303)
 
 
 @app.get("/people/{person_id}", response_class=HTMLResponse)

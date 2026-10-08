@@ -1,0 +1,17 @@
+.status-completed { background: #d9f5ec; color: #08634f; }
+.status-failed { background: #fde2e1; color: #a12622; }
+.status-running { background: #fff0c2; color: #7a5600; }
+.employment-status {
+  display: inline-block;
+  padding: .3rem .7rem;
+  border-radius: 999px;
+  font-size: .82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.employment-working { background: #d9f5ec; color: #08634f; }
+.employment-resigned { background: #fde2e1; color: #a12622; }
+.employment-unchecked { background: #e8ebef; color: #4b5563; }
+.stat-working { background: linear-gradient(135deg, #116149, #0b8063); }
+.stat-resigned { background: linear-gradient(135deg, #8a2924, #bd463d); }
+.stat-neutral { background: linear-gradient(135deg, #4b5563, #697586); }

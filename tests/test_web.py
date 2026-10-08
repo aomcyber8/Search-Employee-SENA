@@ -78,6 +78,8 @@ def test_login_and_role_protection(db):
         assert 'href="/search" aria-label="ล้างเงื่อนไขการค้นหาทั้งหมด"' in response.text
         response = client.get("/admin/imports")
         assert response.status_code == 403
+        response = client.get("/admin/hr-updates")
+        assert response.status_code == 403
 
 
 def test_unauthenticated_search_redirects():
@@ -113,3 +115,8 @@ def test_unit_text_filter_supports_partial_match_and_legacy_id(db):
         response = client.get("/search?unit=%25")
         assert "คุณสมชาย ทดสอบ" not in response.text
         assert "คุณสมหญิง ตัวอย่าง" not in response.text
+
+        response = client.get("/search?status=ยังไม่ตรวจสอบ")
+        assert response.status_code == 200
+        assert "คุณสมชาย ทดสอบ" in response.text
+        assert 'name="status"' in response.text

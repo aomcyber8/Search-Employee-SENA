@@ -6,6 +6,7 @@
   <title>{{ title }} · {{ request.app.title }}</title>
   <link href="{{ url_for('static', path='/bootstrap.min.css') }}" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='/hr.css') }}">
   <script src="{{ url_for('static', path='/htmx.min.js') }}" defer></script>
 </head>
 <body>
@@ -17,6 +18,7 @@
         <a class="nav-link text-white" href="/search">ค้นหา</a>
         {% if user.role == 'admin' %}
         <a class="nav-link text-white" href="/admin/imports">นำเข้าข้อมูล</a>
+        <a class="nav-link text-white" href="/admin/hr-updates">HR Update</a>
         <a class="nav-link text-white" href="/admin/users">ผู้ใช้งาน</a>
         {% endif %}
         <span class="nav-user">{{ user.username }}</span>

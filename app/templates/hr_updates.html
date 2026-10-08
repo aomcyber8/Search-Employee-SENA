@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head mb-4">
+  <div><p class="eyebrow">ADMIN · HR DATA</p><h1>Update Data from HR</h1><p>ดึงรายชื่อทั้งหมดจากระบบ HR และเปรียบเทียบสถานะกับข้อมูล Excel</p></div>
+  <form method="post" action="/admin/hr-updates/refresh"><input type="hidden" name="csrf" value="{{ csrf_token }}"><button class="btn btn-primary btn-lg" onclick="return confirm('ยืนยันการดึงข้อมูล HR และคำนวณสถานะพนักงานใหม่?')">Update Data from HR</button></form>
+</div>
+{% if current_run %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="stat-card h-100"><span>ข้อมูล HR</span><strong>{{ "{:,}".format(current_run.parsed_count or 0) }}</strong></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card stat-working h-100"><span>ทำงาน</span><strong>{{ "{:,}".format(current_run.working_count or 0) }}</strong></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card stat-resigned h-100"><span>ลาออก</span><strong>{{ "{:,}".format(current_run.resigned_count or 0) }}</strong></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card stat-neutral h-100"><span>ชื่อซ้ำใน HR</span><strong>{{ "{:,}".format(current_run.duplicate_name_count or 0) }}</strong></div></div>
+</div>
+<p class="text-secondary">อัปเดตล่าสุด {{ current_run.completed_at.strftime('%d/%m/%Y %H:%M') if current_run.completed_at else '—' }} · แหล่งข้อมูล <a href="{{ current_run.source_url }}" target="_blank" rel="noopener">SENA Contacts</a></p>
+{% else %}<div class="alert alert-info">ยังไม่เคยอัปเดตข้อมูลจาก HR สถานะพนักงานจะแสดงเป็น “ยังไม่ตรวจสอบ”</div>{% endif %}
+<section class="result-card mb-4">
+  <div class="result-head"><h2 class="h5 mb-0">ข้อมูล HR ชุดปัจจุบัน</h2><span>{{ "{:,}".format(total_records) }} รายการ</span></div>
+  <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>ลำดับ</th><th>รหัสพนักงาน</th><th>ชื่อ–นามสกุล</th><th>หน่วยงาน</th><th>ตำแหน่ง</th><th>อีเมล</th><th>เบอร์โทร</th></tr></thead><tbody>
+  {% for item in records %}<tr><td>{{ item.source_order }}</td><td>{{ item.employee_code or '—' }}</td><td><strong>{{ item.full_name }}</strong></td><td>{{ item.department or '—' }}</td><td>{{ item.position or '—' }}</td><td>{{ item.email or '—' }}</td><td>{% if item.mobile %}<div>{{ item.mobile }}</div>{% endif %}{% if item.office_phone %}<div>{{ item.office_phone }}</div>{% endif %}{% if not item.mobile and not item.office_phone %}—{% endif %}</td></tr>{% else %}<tr><td colspan="7" class="text-center text-secondary py-5">ยังไม่มีข้อมูล HR</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% if pages > 1 %}<nav class="mb-4"><ul class="pagination justify-content-center">{% for p in range(1, pages + 1) %}<li class="page-item {% if p == page %}active{% endif %}"><a class="page-link" href="/admin/hr-updates?page={{ p }}">{{ p }}</a></li>{% endfor %}</ul></nav>{% endif %}
+<section class="result-card"><div class="result-head"><h2 class="h5 mb-0">ประวัติการอัปเดต</h2></div>
+  <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>ครั้งที่</th><th>วันที่</th><th>ผู้ดำเนินการ</th><th>ผลลัพธ์</th><th>จำนวน</th><th>รายละเอียด</th></tr></thead><tbody>
+  {% for run in runs %}<tr><td>#{{ run.id }}</td><td>{{ run.created_at.strftime('%d/%m/%Y %H:%M') }}</td><td>{{ run.created_by.username }}</td><td><span class="status status-{{ run.status }}">{{ 'สำเร็จ' if run.status == 'completed' else ('ล้มเหลว' if run.status == 'failed' else 'กำลังทำงาน') }}</span>{% if run.is_current %} <span class="badge text-bg-primary">ปัจจุบัน</span>{% endif %}</td><td>{{ "{:,}".format(run.parsed_count or 0) }}</td><td class="text-danger small">{{ run.error_message or '—' }}</td></tr>{% else %}<tr><td colspan="6" class="text-center text-secondary py-5">ยังไม่มีประวัติ</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}

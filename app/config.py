@@ -18,6 +18,11 @@ class Settings:
     admin_username = os.getenv("ADMIN_USERNAME", "admin")
     admin_password = os.getenv("ADMIN_PASSWORD", "")
     session_https_only = os.getenv("SESSION_HTTPS_ONLY", "false").lower() == "true"
+    hr_contacts_url = os.getenv(
+        "HR_CONTACTS_URL",
+        "http://project-status.sena-it.com/contacts/",
+    )
+    hr_contacts_timeout = float(os.getenv("HR_CONTACTS_TIMEOUT", "60"))
 
 
 settings = Settings()

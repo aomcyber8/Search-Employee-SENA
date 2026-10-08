@@ -11,11 +11,12 @@
 
 <form method="get" action="/search" class="filter-panel mb-4">
   <div class="row g-3 align-items-end">
-    <div class="col-12 col-xl-5"><label class="form-label" for="q">คำค้นหา</label><input class="form-control form-control-lg" id="q" name="q" value="{{ q }}" placeholder="ชื่อ เบอร์โทร อีเมล ตำแหน่ง..."></div>
+    <div class="col-12 col-xl-4"><label class="form-label" for="q">คำค้นหา</label><input class="form-control form-control-lg" id="q" name="q" value="{{ q }}" placeholder="ชื่อ เบอร์โทร อีเมล ตำแหน่ง..."></div>
     <div class="col-6 col-md-3 col-xl-2"><label class="form-label">ตึก</label><select class="form-select" name="building_id"><option value="">ทุกตึก</option>{% for b in buildings %}<option value="{{ b.id }}" {% if building_id == b.id %}selected{% endif %}>{{ b.name }}</option>{% endfor %}</select></div>
     <div class="col-6 col-md-3 col-xl-2"><label class="form-label" for="unit">หน่วยงาน</label><input class="form-control" id="unit" name="unit" value="{{ unit }}" list="unit-options" placeholder="พิมพ์ชื่อหน่วยงาน"><datalist id="unit-options">{% for item in units %}<option value="{{ item.name }}"></option>{% endfor %}</datalist></div>
     <div class="col-6 col-md-3 col-xl-1"><label class="form-label">ชั้น</label><input class="form-control" name="floor" value="{{ floor }}" placeholder="เช่น 5"></div>
-    <div class="col-6 col-md-3 col-xl-2 d-flex gap-2"><button class="btn btn-primary btn-lg flex-grow-1">ค้นหา</button><a class="btn btn-outline-secondary btn-lg" href="/search" aria-label="ล้างเงื่อนไขการค้นหาทั้งหมด">ล้าง</a></div>
+    <div class="col-6 col-md-3 col-xl-2"><label class="form-label">สถานะ</label><select class="form-select" name="status"><option value="">ทุกสถานะ</option>{% for item in employment_statuses %}<option value="{{ item }}" {% if status == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+    <div class="col-12 col-xl-2 d-flex gap-2"><button class="btn btn-primary btn-lg flex-grow-1">ค้นหา</button><a class="btn btn-outline-secondary btn-lg" href="/search" aria-label="ล้างเงื่อนไขการค้นหาทั้งหมด">ล้าง</a></div>
   </div>
 </form>
 
@@ -24,12 +25,13 @@
   {% if people %}
   <div class="table-responsive">
     <table class="table align-middle mb-0">
-      <thead><tr><th>ชื่อ–นามสกุล</th><th>ตำแหน่ง / หน่วยงาน</th><th>สถานที่</th><th>ข้อมูลติดต่อ</th><th></th></tr></thead>
+      <thead><tr><th>ชื่อ–นามสกุล</th><th>สถานะ</th><th>ตำแหน่ง / หน่วยงาน</th><th>สถานที่</th><th>ข้อมูลติดต่อ</th><th></th></tr></thead>
       <tbody>
       {% for person in people %}
         {% set active = person.assignments | selectattr('is_active') | list %}
         <tr>
           <td><strong>{{ person.full_name }}</strong>{% if person.nickname %}<div class="text-secondary small">{{ person.nickname }}</div>{% endif %}{% if person.needs_review %}<span class="badge text-bg-warning mt-1">รอตรวจสอบ</span>{% endif %}</td>
+          <td><span class="employment-status employment-{{ 'working' if person.employment_status == 'ทำงาน' else ('resigned' if person.employment_status == 'ลาออก' else 'unchecked') }}">{{ person.employment_status or 'ยังไม่ตรวจสอบ' }}</span></td>
           <td>{% for a in active[:2] %}<div>{{ a.position or '—' }}</div><small class="text-secondary">{{ a.organization_unit.name if a.organization_unit else 'ไม่ระบุหน่วยงาน' }}</small>{% if not loop.last %}<hr class="my-1">{% endif %}{% endfor %}</td>
           <td>{% for a in active[:2] %}<div>{{ a.building.name if a.building else 'ไม่ระบุตึก' }}{% if a.floor %} · ชั้น {{ a.floor }}{% endif %}</div>{% endfor %}</td>
           <td>{% for c in person.contacts if c.is_active %}<div class="contact-line"><span>{{ 'อีเมล' if c.contact_type == 'email' else ('เบอร์ต่อ' if c.contact_type == 'extension' else 'โทร') }}</span>{{ c.raw_value }}</div>{% endfor %}</td>
@@ -44,7 +46,7 @@
 
 {% if pages > 1 %}
 <nav class="mt-4"><ul class="pagination justify-content-center">
-  {% for p in range(1, pages + 1) %}<li class="page-item {% if p == page %}active{% endif %}"><a class="page-link" href="/search?q={{ q|urlencode }}&building_id={{ building_id or '' }}&unit={{ unit|urlencode }}&unit_id={{ unit_id or '' }}&floor={{ floor|urlencode }}&page={{ p }}">{{ p }}</a></li>{% endfor %}
+  {% for p in range(1, pages + 1) %}<li class="page-item {% if p == page %}active{% endif %}"><a class="page-link" href="/search?q={{ q|urlencode }}&building_id={{ building_id or '' }}&unit={{ unit|urlencode }}&unit_id={{ unit_id or '' }}&floor={{ floor|urlencode }}&status={{ status|urlencode }}&page={{ p }}">{{ p }}</a></li>{% endfor %}
 </ul></nav>
 {% endif %}
 {% endblock %}
